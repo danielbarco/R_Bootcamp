@@ -39,6 +39,9 @@ library(tidytext) # for NLP
 library(tm)  # for text mining
 library(dygraphs)  # nice time series visualization
 library(xts)  # more efficient time series format
+library(reticulate) #to add python chunk
+use_python("/Users/nijeri/dlv/bin/python3.7") #since the default version of python in mac os is python 2. it is necessary
+# to specify python 3.7. unfortunately there is no way to solve this in a generic approach, that works on all machines.
 set.seed(69)
 ```
 
@@ -347,3 +350,17 @@ p <- ggplot(val_pred,
 p1 <- p + colScale 
 p1
 ```
+
+```{python}
+import pandas as pd
+import sklearn 
+
+
+
+
+
+
+
+```
+
+
