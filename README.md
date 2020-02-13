@@ -21,11 +21,11 @@ The time range is from 01.05.2017 - 30.09.2019
 
 ## folder structure:
 
-|— R_Bootcamp __
-|—— Code (use this as working directory) __
-|——— RBootcamp_Assignment.Rmd__
-|—— DATA__
-|—— OUTPUT__
+|— R_Bootcamp <br />
+|—— Code (use this as working directory) <br />
+|——— RBootcamp_Assignment.Rmd <br />
+|—— DATA <br />
+|—— OUTPUT <br />
 
  
  
