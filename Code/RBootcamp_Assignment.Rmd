@@ -1,0 +1,440 @@
+---
+title: "R Bootcamp"
+date: "February 2020"
+author:
+- Daniel Barco & Silvan Burnand
+output:
+  html_document:
+    df_print: paged
+    theme: united
+    toc: yes
+    number_sections: true
+    toc_float: true
+  pdf_document: default
+---
+
+<br>
+
+
+## Load libraries
+
+```{r message=FALSE, warning=FALSE}
+# load libraries
+
+library(getPass)
+library(RCurl)
+library(tidyverse)
+library(magrittr)
+library(janitor)
+library(readxl)
+library(lubridate)
+library(DataExplorer)
+library(ggfortify)  # autoplot
+library(vistime)
+library(plotly)
+library(DT)
+library(DT) # for dynamic tables
+library(wordcloud) # to render wordclouds
+library(tidytext) # for NLP
+library(tm)  # for text mining
+library(dygraphs)  # nice time series visualization
+library(xts)  # more efficient time series format
+set.seed(69)
+```
+
+<br><br>
+
+
+# Check & explore data
+
+## Load data
+
+
+```{r}
+# load & preprocess data
+
+d <- read_csv("./dataset_lenzerheide.csv")
+
+# lower case all variable names for easier programming
+d %<>% rename_all(tolower)
+
+d$datum <- dmy(d$datum)
+
+d %<>%
+  filter(datum < "2019-10-01")%>%
+  arrange(desc(datum))
+
+d %<>% filter(datum < "2016-05-01" | datum > "2017-04-30")
+write_csv(d, "./lenzerheide_zeiraeume_ohne_leere_labels.csv") 
+
+introduce(d)
+plot_intro(d)
+plot_missing(d)
+plot_correlation(d)
+plot_histogram(d)
+
+```
+
+
+<br><br>
+
+# Preprocessing
+## Check timeseries data
+
+
+```{r warning=TRUE}
+
+d_schalter_daily_xts <- xts(x = d$schalter, order.by = d$datum)
+names(d_schalter_daily_xts) <- "schalter"
+
+d_schalter_daily_monthly_xts <- apply.monthly(d_schalter_daily_xts, sum)
+
+# interactive graph
+dygraph(d_schalter_daily_xts, main = "Daily aggregated line plot") %>%
+  dyRangeSelector()
+
+```
+
+Jesus, we are missing some data from July 2016 until may 2017. No problem we can solve it: 
+
+ ![Alt Text](https://media.giphy.com/media/gMHFX7PEDZEHK/giphy.gif) 
+
+
+Most sensible idea might be to exclude the missing time period from the 1st of may 2016 to the 1st of may 2017, as interpolation may cause a biased interpretation.
+
+```{r}
+ts <- read_csv("./dataset_lenzerheide.csv")
+
+# lower case all variable names for easier programming
+ts %<>% rename_all(tolower)
+
+ts$datum <- dmy(ts$datum)
+
+ts %<>%
+  filter(datum < "2019-10-01")%>%
+  arrange(desc(datum))
+
+ts %<>% filter(datum >= "2017-05-01" )
+
+ts_schalter_daily_xts <- xts(x = ts$schalter, order.by = ts$datum)
+names(ts_schalter_daily_xts) <- "schalter"
+
+#ts_schalter_daily_monthly_xts <- apply.monthly(ts_schalter_daily_xts, sum)
+
+# interactive graph
+dygraph(ts_schalter_daily_xts, main = "Daily aggregated line plot") %>%
+  dyRangeSelector()
+
+```
+
+
+<br><br>
+
+## Check data types
+
+There are some data as strings we will change them to numeric.
+
+```{r}
+str(ts)
+```
+<br><br>
+
+### Replace NAs with 0s
+```{r}
+ts[is.na(ts)] <- 0
+```
+<br><br>
+
+### Replace coloumn names whitspace with _
+```{r}
+names(ts) <- gsub(x = names(ts), pattern = " ", replacement = "_")  
+names(ts)
+```
+<br><br>
+
+### Convert chr variables to factors and then to integers
+```{r}
+ts$wochentag = factor(ts$wochentag, levels = c(unique(ts$wochentag)), labels=c(seq(1,7)))
+ts$ferien_desc_zh  = factor(ts$ferien_desc_zh , levels = c(unique(ts$ferien_desc_zh)), labels=c(seq(0,4)))
+ts$ferien_desc_sg = factor(ts$ferien_desc_sg, levels = c(unique(ts$ferien_desc_sg)), labels=c(seq(0,4)))
+ts$ferien_desc_gr = factor(ts$ferien_desc_gr, levels = c(unique(ts$ferien_desc_gr)), labels=c(seq(0,4)))
+ts$feiertag_desc  = factor(ts$feiertag_desc , levels = c(unique(ts$feiertag_desc )), labels=c(seq(0,40)))
+```
+
+<br><br>
+
+### Add variable day_count
+
+```{r}
+
+
+ls.17 <- sort(seq(from = 121, to = 365, by = 1), decreasing = TRUE)
+ls.18 <- sort(seq(from = 1, to = 365, by = 1), decreasing = TRUE)
+ls.19 <- sort(seq(from = 1, to = 273, by = 1), decreasing = TRUE)
+
+ls.day_count <- c(ls.19,ls.18,ls.17)
+
+ts$day_count <- ls.day_count
+```
+
+<br><br>
+
+### Change weekdays to circular
+
+Cyclical feature engeneering. This is how we Sunday and Monday will be numerically close to one another. 
+
+```{r}
+
+def_sin <- function(x, total){
+  result = sin(2 * pi * as.integer(x) / total)
+  return(result) 
+}
+
+def_cos <- function(x, total){
+  result = cos(2 * pi * as.integer(x) / total)
+  return(result) 
+}
+
+def_test <- function(x){
+  result =  as.integer(x) + 1
+  return(result) 
+}
+
+ts$sin_weekday = def_sin(ts$wochentag, 7)
+ts$cos_weekday = def_cos(ts$wochentag, 7)
+ts$day_count = def_sin(ts$wochentag, 365)
+ts$day_count = def_cos(ts$wochentag, 365)
+```
+
+
+<br><br>
+
+
+## Divide and conquer
+
+ ![Alt Text](https://media.giphy.com/media/3o6fIVCYOLGPO1cfYc/giphy.gif) 
+
+We will use Schalter as target variable. This is the amount of tourist that physically visit the tourist information. The other target variables will be excluded: tel, mail, total_anfragen.
+
+```{r}
+train <- filter(ts, datum < "2018-12-01")
+validate <- filter(ts, (datum  > "2018-12-01" & datum < "2019-05-01"))
+test <- filter(ts, datum >= "2019-05-01" )
+dd_train <- train[,c(-1, -36, -35, -34)]
+dd_validate <- validate[,c(-1,-36, -35, -34)]
+dd_test <- test[,c(-1, -36, -35, -34)]
+```
+
+<br><br>
+
+# Linear Model, General Additive Model (GAM)
+
+```{r}
+require(gam)
+gam.fit <- gam(schalter ~ .,
+               data=dd_train)
+par(mfrow=c(3,3))
+plot(gam.fit, se=TRUE, col="blue")
+summary(gam.fit)
+```
+
+# Random  Forest
+Create Random Forest Tree mtry to 30 (35 variables -date, etc.)
+```{r}
+library(randomForest)
+rf.try = randomForest(schalter~., data=dd_train, importance=TRUE)
+rf.try
+```
+
+
+Check which Random Forest ist most promising
+```{r}
+oob.err=double(15)
+test.err=double(15)
+
+#mtry is no of Variables randomly chosen at each split
+for(mtry in 1:15) 
+{
+  rf=randomForest(schalter ~ . , data= dd_train,mtry=mtry,ntree=400) 
+  oob.err[mtry] = rf$mse[400] #Error of all Trees fitted
+  
+  pred<-predict(rf,dd_validate) #Predictions on Test Set for each Tree
+  test.err[mtry]= with(dd_validate, mean( (schalter - pred)^2)) #Mean Squared Test Error
+  
+  cat(mtry," ") #printing the output to the console
+}
+```
+
+
+Plot out the results
+```{r}
+matplot(1:mtry , cbind(oob.err,test.err), pch=19 , col=c("red","blue"),type="b",ylab="Mean Squared Error",xlab="Number of Predictors Considered at each Split")
+legend("topright",legend=c("Out of Bag Error","Test Error"),pch=19, col=c("red","blue"))
+```
+
+### Looks like 8 predictors should be sufficient.
+
+```{r}
+rf.dd=randomForest(schalter~.,data=dd_train,mtry=7,importance=TRUE,ntree=25)
+yhat.rf = predict(rf.dd,newdata=dd_validate)
+test.err= mean( (dd_validate$schalter - yhat.rf)^2)
+print(test.err)
+#importance(rf.dd)
+varImpPlot(rf.dd)
+```
+
+```{r}
+rf.fit=randomForest(schalter~. ,data=dd_train,mtry=7,importance=TRUE)
+rf.fit
+rf.pred = predict(rf.fit,newdata=dd_validate)
+
+```
+
+Plot Residuals Stack & Mean Residuals (blue) & Regression line (red)
+```{r}
+val_plot <- dd_validate
+val_plot$rf.res <- dd_validate$schalter - rf.pred
+n <- nrow(val_plot)
+val_plot$count <- (1:n)
+plot(val_plot$rf.res~val_plot$count)
+abline(lm(val_plot$rf.res~val_plot$count),col="red")
+abline(h= mean(val_plot$rf.res),col="blue")
+```
+
+
+Add the mean difference
+```{r}
+# calculate the percentage difference of predicted mean to test mean
+rf.mean <- mean(dd_validate$schalter-rf.pred)/mean(rf.pred)
+rf.mean
+```
+
+Add the median difference
+```{r}
+# calculate the percentage difference of predicted mean to test mean
+rf.median <- median(dd_validate$schalter-rf.pred)/median(rf.pred)
+rf.median
+
+# calculate residuals
+rf.median.res <- dd_validate$schalter - ((1+rf.median)*rf.pred)
+rf.res <- dd_validate$schalter - rf.pred
+```
+
+Plot Residuals Stack & Mean Residuals (blue) & Regression line (red)
+```{r}
+val_plot <- dd_validate
+val_plot$rf.res <- rf.median.res
+n <- nrow(val_plot)
+val_plot$count <- (1:n)
+plot(val_plot$rf.res~val_plot$count)
+abline(lm(val_plot$rf.res~val_plot$count),col="red")
+abline(h= mean(val_plot$rf.res),col="blue")
+```
+
+Visualise Error
+```{r}
+library(RColorBrewer)
+library(ggplot2)
+val_pred <- dd_validate
+val_pred$prediction <- rf.res
+n <- nrow(dd_validate)
+val_pred$count <- (1:n)
+
+myColors <- brewer.pal(7, "Set1")
+names(myColors) <- levels(val_pred$wochentag)
+colScale <- scale_colour_manual(name = "weekdayN", values = myColors)
+
+#and then add the color scale onto the plot as needed:
+
+
+#One plot with all the data
+p <- ggplot(val_pred,
+            aes(count, prediction, colour = as.factor(wochentag))) + 
+    geom_point(alpha = 0.7) 
+
+p1 <- p + colScale 
+p1
+```
+
+# Boosting
+
+
+Set parameters
+```{r}
+training = dd_train
+validating = dd_validate
+trees = 40000
+shrinkage = 0.0001
+interaction = 5
+minnodes = 10
+```
+
+Boosting going after bias
+```{r}
+library(gbm)
+boost.fit= gbm(schalter~ ., data=training, distribution = "gaussian", n.trees = trees, shrinkage = shrinkage, interaction.depth = interaction, n.minobsinnode = minnodes )
+summary(boost.fit)
+plot(boost.fit, i="wochentag")
+
+```
+
+Prediction on Validation Set
+```{r}
+n.trees = seq(from=100, to=trees, by=100)
+val.boost = predict(boost.fit, newdata=validating, n.trees = n.trees)
+dim(val.boost)
+berr = with(validating, apply((val.boost - validating$schalter)^2, 2, mean))
+plot(n.trees, berr, pch=19, ylab = "Mean Squared Error", xlab="# Trees", main = "Boosting Validation Error")
+#points(min.bic, fwd.summary$bic[min.bic], col="red", pch=4, lwd=5)
+which.min(berr)
+
+```
+
+
+Boosting Error and plot
+```{r}
+
+boost.fit= gbm(schalter~ ., data=training, distribution = "gaussian", n.trees = 32000, shrinkage = shrinkage, interaction.depth = interaction, n.minobsinnode = minnodes )
+
+boost.pred <- predict(boost.fit,newdata=validating, n.trees=trees)
+boost.res <- dd_validate$schalter - boost.pred
+
+val_plot <- validating
+val_plot$res <- boost.res
+n <- nrow(val_plot)
+val_plot$count <- (1:n)
+#absolute residuals
+plot(val_plot$res~val_plot$count)
+abline(lm(val_plot$res~val_plot$count),col="red")
+abline(h= mean(val_plot$res), col="blue")
+
+val_plot <- validating
+val_plot$res <- abs(boost.res/ validating$schalter)
+n <- nrow(val_plot)
+val_plot$count <- (1:n)
+```
+
+
+Visualise Error per week
+```{r}
+library(RColorBrewer)
+library(ggplot2)
+
+myColors <- brewer.pal(7, "Set1")
+names(myColors) <- levels(val_plot$wochentag)
+colScale <- scale_colour_manual(name = "weekdayN", values = myColors)
+
+#and then add the color scale onto the plot as needed:
+
+
+#One plot with all the data
+p <- ggplot(val_plot,
+            aes(count, boost.res, colour = as.factor(wochentag))) + 
+  geom_point(alpha = 0.7) 
+p1 <- p + colScale 
+p1
+```
+
+
+
+
