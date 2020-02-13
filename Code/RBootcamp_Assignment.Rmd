@@ -226,20 +226,38 @@ test <- filter(ts, datum >= "2019-05-01" )
 dd_train <- train[,c(-1, -36, -35, -34)]
 dd_validate <- validate[,c(-1,-36, -35, -34)]
 dd_test <- test[,c(-1, -36, -35, -34)]
+write_csv(dd_train, "../Data/train.csv") 
+write_csv(dd_validate, "../Data/validate.csv") 
+write_csv(dd_test, "../Data/test.csv") 
+
 ```
 
 <br><br>
 
-# Linear Model, General Additive Model (GAM)
+# Linear Model
 
 ```{r}
-require(gam)
-gam.fit <- gam(schalter ~ .,
+
+lm.fit <- lm(schalter ~.,
                data=dd_train)
 par(mfrow=c(3,3))
-plot(gam.fit, se=TRUE, col="blue")
-summary(gam.fit)
+plot(lm.fit, se=TRUE, col="blue")
+summary(lm.fit)
 ```
+### Let us check the coefficients
+```{r}
+lm.fit$coefficients
+```
+
+### Let us check the coefficients
+```{r}
+str(summary(lm.fit), max.level = 1)
+str(lm.fit, max.level = 1
+    )
+class(lm.fit)
+summary(lm.fit)
+```
+
 
 # Random  Forest
 Create Random Forest Tree mtry to 30 (35 variables -date, etc.)
@@ -278,7 +296,7 @@ legend("topright",legend=c("Out of Bag Error","Test Error"),pch=19, col=c("red",
 ### Looks like 8 predictors should be sufficient.
 
 ```{r}
-rf.dd=randomForest(schalter~.,data=dd_train,mtry=7,importance=TRUE,ntree=25)
+rf.dd=randomForest(schalter~.,data=dd_train,mtry=8,importance=TRUE,ntree=25)
 yhat.rf = predict(rf.dd,newdata=dd_validate)
 test.err= mean( (dd_validate$schalter - yhat.rf)^2)
 print(test.err)
@@ -287,7 +305,7 @@ varImpPlot(rf.dd)
 ```
 
 ```{r}
-rf.fit=randomForest(schalter~. ,data=dd_train,mtry=7,importance=TRUE)
+rf.fit=randomForest(schalter~. ,data=dd_train,mtry=8,importance=TRUE)
 rf.fit
 rf.pred = predict(rf.fit,newdata=dd_validate)
 ```
@@ -353,14 +371,42 @@ p1
 
 ```{python}
 import pandas as pd
-import sklearn 
+import sklearn as sk
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import random
+random.seed(69)
 
+train = pd.read_csv('../Data/train.csv') 
+validate = pd.read_csv('../Data/validate.csv') 
+test = pd.read_csv('../Data/test.csv') 
+X_train = train.drop(columns=['schalter'])
+y_train = train['schalter']
+X_validate = validate.drop(columns=['schalter'])
+y_validate = validate['schalter']
 
+reg = LinearRegression().fit(X_train, y_train)
+reg.score(X_train, y_train)
 
+# Make predictions using the testing set
+y_pred = reg.predict(X_validate)
 
+reg.get_params
 
+# The coefficients
+print('Coefficients: \n', reg.coef_)
 
+# The mean squared error
+print('Mean squared error: %.2f'
+      % mean_squared_error(y_validate, y_pred))
+      
+# The coefficient of determination: 1 is perfect prediction
+print('Coefficient of determination: %.2f'
+      % r2_score(y_validate, y_pred))
 
 ```
 
+Unlike most other scores, R^2 score may be negative (it need not actually be the square of a quantity R). source(https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html)
 
+ ![Alt Text](https://media.giphy.com/media/3o72F7JTbNletrGzvO/giphy.gif) 
+  ![Alt Text](https://media.giphy.com/media/10tuFEeuACAnuw/giphy.gif) 
