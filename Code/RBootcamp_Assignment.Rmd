@@ -255,8 +255,8 @@ test.err=double(15)
 #mtry is no of Variables randomly chosen at each split
 for(mtry in 1:15) 
 {
-  rf=randomForest(schalter ~ . , data= dd_train,mtry=mtry,ntree=400) 
-  oob.err[mtry] = rf$mse[400] #Error of all Trees fitted
+  rf=randomForest(schalter ~ . , data= dd_train,mtry=mtry,ntree=500) 
+  oob.err[mtry] = rf$mse[500] #Error of all Trees fitted
   
   pred<-predict(rf,dd_validate) #Predictions on Test Set for each Tree
   test.err[mtry]= with(dd_validate, mean( (schalter - pred)^2)) #Mean Squared Test Error
@@ -287,7 +287,6 @@ varImpPlot(rf.dd)
 rf.fit=randomForest(schalter~. ,data=dd_train,mtry=7,importance=TRUE)
 rf.fit
 rf.pred = predict(rf.fit,newdata=dd_validate)
-
 ```
 
 Plot Residuals Stack & Mean Residuals (blue) & Regression line (red)
@@ -307,6 +306,10 @@ Add the mean difference
 # calculate the percentage difference of predicted mean to test mean
 rf.mean <- mean(dd_validate$schalter-rf.pred)/mean(rf.pred)
 rf.mean
+
+rf.mse <- with(dd_validate, mean( (schalter - rf.pred)^2))
+rf.mse
+
 ```
 
 Add the median difference
@@ -318,17 +321,6 @@ rf.median
 # calculate residuals
 rf.median.res <- dd_validate$schalter - ((1+rf.median)*rf.pred)
 rf.res <- dd_validate$schalter - rf.pred
-```
-
-Plot Residuals Stack & Mean Residuals (blue) & Regression line (red)
-```{r}
-val_plot <- dd_validate
-val_plot$rf.res <- rf.median.res
-n <- nrow(val_plot)
-val_plot$count <- (1:n)
-plot(val_plot$rf.res~val_plot$count)
-abline(lm(val_plot$rf.res~val_plot$count),col="red")
-abline(h= mean(val_plot$rf.res),col="blue")
 ```
 
 Visualise Error
