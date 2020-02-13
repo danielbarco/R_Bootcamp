@@ -53,7 +53,7 @@ set.seed(69)
 ```{r}
 # load & preprocess data
 
-d <- read_csv("./dataset_lenzerheide.csv")
+d <- read_csv("../Data/dataset_lenzerheide.csv")
 
 # lower case all variable names for easier programming
 d %<>% rename_all(tolower)
@@ -65,7 +65,7 @@ d %<>%
   arrange(desc(datum))
 
 d %<>% filter(datum < "2016-05-01" | datum > "2017-04-30")
-write_csv(d, "./lenzerheide_zeiraeume_ohne_leere_labels.csv") 
+write_csv(d, "../Data/lenzerheide_zeiraeume_ohne_leere_labels.csv") 
 
 introduce(d)
 plot_intro(d)
@@ -103,7 +103,7 @@ Jesus, we are missing some data from July 2016 until may 2017. No problem we can
 Most sensible idea might be to exclude the missing time period from the 1st of may 2016 to the 1st of may 2017, as interpolation may cause a biased interpretation.
 
 ```{r}
-ts <- read_csv("./dataset_lenzerheide.csv")
+ts <- read_csv("../Data/dataset_lenzerheide.csv")
 
 # lower case all variable names for easier programming
 ts %<>% rename_all(tolower)
