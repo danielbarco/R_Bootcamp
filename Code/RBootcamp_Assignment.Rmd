@@ -40,8 +40,8 @@ library(tm)  # for text mining
 library(dygraphs)  # nice time series visualization
 library(xts)  # more efficient time series format
 library(reticulate) #to add python chunk
-use_python("/Users/nijeri/dlv/bin/python3.7") #since the default version of python in mac os is python 2. it is necessary
-# to specify python 3.7. unfortunately there is no way to solve this in a generic approach, that works on all machines.
+use_python("/Users/nijeri/dlv/bin/python3.7") #since the default version of python on mac os is python 2. it is necessary
+# to specify python 3.7. unfortunately there is no way to solve this in a generic approach that works on all machines.
 set.seed(69)
 ```
 
@@ -156,6 +156,9 @@ names(ts)
 <br><br>
 
 ### Convert chr variables to factors and then to integers
+
+We need those variables as integers, because they will be used for additional feature engineering later on.
+
 ```{r}
 ts$wochentag = factor(ts$wochentag, levels = c(unique(ts$wochentag)), labels=c(seq(1,7)))
 ts$ferien_desc_zh  = factor(ts$ferien_desc_zh , levels = c(unique(ts$ferien_desc_zh)), labels=c(seq(0,4)))
@@ -167,6 +170,8 @@ ts$feiertag_desc  = factor(ts$feiertag_desc , levels = c(unique(ts$feiertag_desc
 <br><br>
 
 ### Add variable day_count
+
+Number of day in year maybe an interesting feature, which can easily be added to the data. First we create three different sequences (one for each year). Afterwards the three sequences are concatenated to one vector which is added as variable "day_count".
 
 ```{r}
 
@@ -240,8 +245,8 @@ write_csv(dd_test, "../Data/test.csv")
 
 lm.fit <- lm(schalter ~.,
                data=dd_train)
-par(mfrow=c(3,3))
-plot(lm.fit, se=TRUE, col="blue")
+par(mfrow=c(2,2))
+plot(lm.fit, col="blue")
 summary(lm.fit)
 ```
 ### Let us check the coefficients
@@ -316,8 +321,8 @@ val_plot <- dd_validate
 val_plot$rf.res <- dd_validate$schalter - rf.pred
 n <- nrow(val_plot)
 val_plot$count <- (1:n)
-plot(val_plot$rf.res~val_plot$count)
-abline(lm(val_plot$rf.res~val_plot$count),col="red")
+plot(val_plot$rf.res~val_plot$count, xlab = "Count", ylab = "Residuals", main = "Residuals Stack & Mean Residuals (blue) & Regression line (red)")
+abline(lm(val_plot$rf.res~val_plot$count), col = "red")
 abline(h= mean(val_plot$rf.res),col="blue")
 ```
 
@@ -410,3 +415,4 @@ Unlike most other scores, R^2 score may be negative (it need not actually be the
 
  ![Alt Text](https://media.giphy.com/media/3o72F7JTbNletrGzvO/giphy.gif) 
   ![Alt Text](https://media.giphy.com/media/10tuFEeuACAnuw/giphy.gif) 
+
