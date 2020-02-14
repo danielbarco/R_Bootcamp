@@ -4,7 +4,7 @@
 
 The tourist information offices in both Arosa and Lenzerheide staff their offices according to how many tourists they expect to be contacted by. The process of staffing the office relies on experience and laborious mapping of the next months events, season, holidays etc.
 
-## client requirements:
+## Client requirements:
 
 The tourist office would like a tool to facilitate and enhance the prediction of tourist requests.
 
