@@ -190,12 +190,12 @@ ts$ferien_desc_zh  = factor(ts$ferien_desc_zh , levels = c(unique(ts$ferien_desc
 ts$ferien_desc_sg = factor(ts$ferien_desc_sg, levels = c(unique(ts$ferien_desc_sg)), labels=c(seq(0,4)))
 ts$ferien_desc_gr = factor(ts$ferien_desc_gr, levels = c(unique(ts$ferien_desc_gr)), labels=c(seq(0,4)))
 ts$feiertag_desc  = factor(ts$feiertag_desc , levels = c(unique(ts$feiertag_desc )), labels=c(seq(0,40)))
-ts$isferiengr = factor(ts$isferiengr, levels = c(unique(ts$isferiengr)), labels = c(0, 1))
-ts$isferiensg = factor(ts$isferiensg, levels = c(unique(ts$isferiensg)), labels= c(0, 1))
-ts$isferienzh = factor(ts$isferienzh, levels = c(unique(ts$isferienzh)), labels= c(0, 1))
-ts$isfeiertag_gr = factor(ts$isfeiertag_gr, levels = c(unique(ts$isfeiertag_gr)), labels= c(0, 1))
-ts$isfeiertag_sg = factor(ts$isfeiertag_sg, levels = c(unique(ts$isfeiertag_sg)), labels = c(0, 1))
-ts$isfeiertag_zh = factor(ts$isfeiertag_zh, levels = c(unique(ts$isfeiertag_zh)), labels= c(0, 1))
+ts$isferiengr = factor(ts$isferiengr, levels = c(unique(ts$isferiengr)), labels = c(-1, 1))
+ts$isferiensg = factor(ts$isferiensg, levels = c(unique(ts$isferiensg)), labels= c(-1, 1))
+ts$isferienzh = factor(ts$isferienzh, levels = c(unique(ts$isferienzh)), labels= c(-1, 1))
+ts$isfeiertag_gr = factor(ts$isfeiertag_gr, levels = c(unique(ts$isfeiertag_gr)), labels= c(-1, 1))
+ts$isfeiertag_sg = factor(ts$isfeiertag_sg, levels = c(unique(ts$isfeiertag_sg)), labels = c(-1, 1))
+ts$isfeiertag_zh = factor(ts$isfeiertag_zh, levels = c(unique(ts$isfeiertag_zh)), labels= c(-1, 1))
 #ts$day_count = factor(ts$day_count, levels = c(unique(ts$day_count)), labels=c(seq(1,365)))
 levels(ts$isfeiertag_zh)
 ```
@@ -439,9 +439,9 @@ print('Coefficient of determination: %.2f'
 
 Some notes concerning the output: Unlike most other scores, R^2 score may be negative (it need not actually be the square of a quantity R). source(https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html)
 
-The python output for this model is not as easily interpretable as in the R script. The R script follows a convenient layout wheras in pyhton this information must be extracted from the model.
+The python output for this model is not as easily interpretable as in the R script. The R script follows a convenient layout whereas in pyhton this information must be extracted from the model. For statistical modelling, R comes with some convenient advantages.
 
-Unfortunately not all pyhton functionalities are possible in R, which makes preprocessing and especially preprocessing impossible. I.e. label encoding and one hot encoding. Therefore the lm model in the r script and the one in python are not fully comparable.
+Unfortunately not all pyhton functionalities are possible in R, which makes preprocessing and especially preprocessing impossible i.e. label encoding and one hot encoding. Therefore the lm model in the r script and the one in python are not fully comparable.
 
  ![Python rules](https://media.giphy.com/media/3o72F7JTbNletrGzvO/giphy.gif) 
   ![](https://media.giphy.com/media/10tuFEeuACAnuw/giphy.gif) 
