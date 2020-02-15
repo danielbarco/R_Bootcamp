@@ -190,12 +190,12 @@ ts$ferien_desc_zh  = factor(ts$ferien_desc_zh , levels = c(unique(ts$ferien_desc
 ts$ferien_desc_sg = factor(ts$ferien_desc_sg, levels = c(unique(ts$ferien_desc_sg)), labels=c(seq(0,4)))
 ts$ferien_desc_gr = factor(ts$ferien_desc_gr, levels = c(unique(ts$ferien_desc_gr)), labels=c(seq(0,4)))
 ts$feiertag_desc  = factor(ts$feiertag_desc , levels = c(unique(ts$feiertag_desc )), labels=c(seq(0,40)))
-ts$isferiengr = factor(ts$isferiengr, levels = c(unique(ts$isferiengr)), labels = c(TRUE, FALSE))
-ts$isferiensg = factor(ts$isferiensg, levels = c(unique(ts$isferiensg)), labels= c(TRUE, FALSE))
-ts$isferienzh = factor(ts$isferienzh, levels = c(unique(ts$isferienzh)), labels= c(TRUE, FALSE))
-ts$isfeiertag_gr = factor(ts$isfeiertag_gr, levels = c(unique(ts$isfeiertag_gr)), labels= c(TRUE, FALSE))
-ts$isfeiertag_sg = factor(ts$isfeiertag_sg, levels = c(unique(ts$isfeiertag_sg)), labels = c(TRUE, FALSE))
-ts$isfeiertag_zh = factor(ts$isfeiertag_zh, levels = c(unique(ts$isfeiertag_zh)), labels= c(TRUE, FALSE))
+ts$isferiengr = factor(ts$isferiengr, levels = c(unique(ts$isferiengr)), labels = c(0, 1))
+ts$isferiensg = factor(ts$isferiensg, levels = c(unique(ts$isferiensg)), labels= c(0, 1))
+ts$isferienzh = factor(ts$isferienzh, levels = c(unique(ts$isferienzh)), labels= c(0, 1))
+ts$isfeiertag_gr = factor(ts$isfeiertag_gr, levels = c(unique(ts$isfeiertag_gr)), labels= c(0, 1))
+ts$isfeiertag_sg = factor(ts$isfeiertag_sg, levels = c(unique(ts$isfeiertag_sg)), labels = c(0, 1))
+ts$isfeiertag_zh = factor(ts$isfeiertag_zh, levels = c(unique(ts$isfeiertag_zh)), labels= c(0, 1))
 #ts$day_count = factor(ts$day_count, levels = c(unique(ts$day_count)), labels=c(seq(1,365)))
 levels(ts$isfeiertag_zh)
 ```
@@ -290,21 +290,19 @@ legend("topright",legend=c("Out of Bag Error","Test Error"),pch=19, col=c("red",
 
 ```
 
-### Looks like 8 predictors should be sufficient.
+### Looks like 25 predictors should be sufficient.
 
 ```{r}
-rf.dd=randomForest(schalter~.,data=dd_train,mtry=8,importance=TRUE,ntree=25)
-yhat.rf = predict(rf.dd,newdata=dd_validate)
-test.err= mean( (dd_validate$schalter - yhat.rf)^2)
-print(test.err)
+rf.fit =randomForest(schalter~.,data=dd_train,mtry=25,importance=TRUE,ntree=500)
+rf.fit
 #importance(rf.dd)
-varImpPlot(rf.dd, n.var = 6, sort = TRUE, main = "Random Forest 8 most important variables" )
+varImpPlot(rf.fit, n.var = 8, sort = TRUE, main = "Random Forest 8 most important variables" )
 ```
 
 ```{r}
-rf.fit=randomForest(schalter~. ,data=dd_train,mtry=8,importance=TRUE)
-rf.fit
 rf.pred = predict(rf.fit,newdata=dd_test)
+test.err= mean( (dd_test$schalter - rf.pred)^2)
+print(test.err)
 ```
 
 Plot Residuals Stack & Mean Residuals (blue) & Regression line (red)
@@ -371,6 +369,8 @@ p1
 
 In this plot we can see that the residuals are not greater for any one single weekday, indicating that we do not have a bias, where a certain weekday is predicted better than another. The weekdays are encoded as follows 1 = Monday, 2 = Tuesday etc..
 
+## Comparing Linear Model to Python
+
 ```{python}
 import pandas as pd
 import numpy as np
@@ -378,8 +378,6 @@ import sklearn as sk
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 import random
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
 random.seed(69)
 
 # importing dataframes from R
@@ -413,7 +411,6 @@ validate = r['dd_validate']
 # train = one_hot_encoder(train)
 # validate = one_hot_encoder(validate)
 
-
 X_train = train.drop(columns=['schalter'])
 y_train = train['schalter']
 X_validate = validate.drop(columns=['schalter'])
@@ -444,7 +441,7 @@ Some notes concerning the output: Unlike most other scores, R^2 score may be neg
 
 The python output for this model is not as easily interpretable as in the R script. The R script follows a convenient layout wheras in pyhton this information must be extracted from the model.
 
-Unfortunately not all pyhton functionalities are possible in R, which makes preprocessing and especially preprocessing impossible.
+Unfortunately not all pyhton functionalities are possible in R, which makes preprocessing and especially preprocessing impossible. I.e. label encoding and one hot encoding. Therefore the lm model in the r script and the one in python are not fully comparable.
 
  ![Python rules](https://media.giphy.com/media/3o72F7JTbNletrGzvO/giphy.gif) 
   ![](https://media.giphy.com/media/10tuFEeuACAnuw/giphy.gif) 
