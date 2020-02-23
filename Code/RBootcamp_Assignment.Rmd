@@ -15,6 +15,7 @@ output:
 
 <br>
 
+For Information regarding the use-case please find the attached use case.
 
 ## Load libraries
 
@@ -244,16 +245,6 @@ lm.fit$coefficients
 NAs are produced due to missing elements in the validation dataset, as this dataset is only within a specific timeframe, where not all events occur.
 
 
-### Let us check the coefficients
-```{r}
-str(summary(lm.fit), max.level = 1)
-str(lm.fit, max.level = 1
-    )
-class(lm.fit)
-summary(lm.fit)
-```
-
-
 # Random  Forest
 Create Random Forest Tree mtry to 30 (35 variables -date, etc.)
 ```{r}
@@ -369,7 +360,7 @@ p1
 
 In this plot we can see that the residuals are not greater for any one single weekday, indicating that we do not have a bias, where a certain weekday is predicted better than another. The weekdays are encoded as follows 1 = Monday, 2 = Tuesday etc..
 
-## Comparing Linear Model to Python
+# Comparing Linear Model to Python
 
 ```{python}
 import pandas as pd
