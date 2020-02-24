@@ -42,7 +42,7 @@ library(dygraphs)  # nice time series visualization
 library(xts)  # more efficient time series format
 library(reticulate) #to add python chunk
 use_python("/Users/nijeri/dlv/bin/python3.7") #since the default version of python on mac os is python 2. it is necessary
-# to specify python 3.7. unfortunately there is no way to solve this in a generic approach that works on all machines.
+# to specify python 3.7. unfortunately there is no way to solve this in a generic approach that works on all OS.
 set.seed(69)
 ```
 
